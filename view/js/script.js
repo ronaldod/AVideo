@@ -690,3 +690,37 @@ function alertHTMLText(title, text) {
         content: span
     });
 }
+
+function tooglePlayerLoop(){
+    setPlayerLoop(!isPlayerLoop());
+}
+
+function setPlayerLoop(loop){
+    if(loop){
+        console.log("Loop ON");
+        player.loop(1);
+        $(".loop-button").removeClass('loop-disabled-button');
+        $(".loop-button, .loopButton").addClass('fa-spin');
+    }else{
+        $(".loop-button").addClass('loop-disabled-button');
+        $(".loop-button, .loopButton").removeClass('fa-spin');
+        console.log("Loop OFF");
+        player.loop(0);
+    }
+    Cookies.set('playerLoop', loop, {
+                    path: '/',
+                    expires: 365
+                });                                                   
+    if(typeof setImageLoop === 'function'){
+        setImageLoop();
+    }
+}
+
+function isPlayerLoop(){
+    var loop = Cookies.get('playerLoop');
+    if(loop === "false"){
+        return false;
+    }else{
+        return true;
+    }
+}

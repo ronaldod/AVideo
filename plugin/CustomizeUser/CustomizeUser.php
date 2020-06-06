@@ -36,6 +36,11 @@ class CustomizeUser extends PluginAbstract {
         $obj->usersCanCreateNewCategories = !isset($advancedCustom->usersCanCreateNewCategories) ? false : $advancedCustom->usersCanCreateNewCategories;
         $obj->userCanNotChangeCategory = !isset($advancedCustom->userCanNotChangeCategory) ? false : $advancedCustom->userCanNotChangeCategory;
         $obj->userCanNotChangeUserGroup = false;
+        
+        $o = new stdClass();
+        $o->type = array(0=>_("Default"))+UserGroups::getAllUsersGroupsArray();
+        $o->value = 0;
+        $obj->userDefaultUserGroup = $o;
         $obj->userMustBeLoggedIn = !isset($advancedCustom->userMustBeLoggedIn) ? false : $advancedCustom->userMustBeLoggedIn;
         $obj->userMustBeLoggedInCloseButtonURL = "";
         $obj->onlyVerifiedEmailCanUpload = !isset($advancedCustom->onlyVerifiedEmailCanUpload) ? false : $advancedCustom->onlyVerifiedEmailCanUpload;
@@ -58,6 +63,9 @@ class CustomizeUser extends PluginAbstract {
         $obj->doNotIndentifyByUserName = !isset($advancedCustom->doNotIndentifyByUserName) ? false : $advancedCustom->doNotIndentifyByUserName;
         $obj->hideRemoveChannelFromModeYoutube = !isset($advancedCustom->hideRemoveChannelFromModeYoutube) ? false : $advancedCustom->hideRemoveChannelFromModeYoutube;
         $obj->showChannelBannerOnModeYoutube = !isset($advancedCustom->showChannelBannerOnModeYoutube) ? false : $advancedCustom->showChannelBannerOnModeYoutube;
+        $obj->showChannelHomeTab = true;
+        $obj->showChannelVideosTab = true;
+        $obj->showChannelProgramsTab = true;
         $obj->encryptPasswordsWithSalt = !isset($advancedCustom->encryptPasswordsWithSalt) ? false : $advancedCustom->encryptPasswordsWithSalt;
         $obj->requestCaptchaAfterLoginsAttempts = !isset($advancedCustom->requestCaptchaAfterLoginsAttempts) ? 0 : $advancedCustom->requestCaptchaAfterLoginsAttempts;
         $obj->disableSignOutButton = false;

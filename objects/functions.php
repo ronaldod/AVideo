@@ -455,6 +455,17 @@ function setSiteSendMessage(&$mail) {
         _error_log("Sending SMTP Email");
         $mail->CharSet = 'UTF-8';
         $mail->IsSMTP(); // enable SMTP
+        if(!empty($_POST) && $_POST["comment"] == "Teste of comment" && User::isAdmin()){
+            $mail->SMTPDebug = 3;
+            $mail->Debugoutput = function($str, $level) {_error_log("SMTP ERROR $level; message: $str", AVideoLog::$ERROR);};
+        }
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
         $mail->SMTPAuth = $config->getSmtpAuth(); // authentication enabled
         $mail->SMTPSecure = $config->getSmtpSecure(); // secure transfer enabled REQUIRED for Gmail
         $mail->Host = $config->getSmtpHost();
@@ -1288,7 +1299,24 @@ function im_resize($file_src, $file_dest, $wd, $hd, $q = 50) {
         return false;
     }
 
-    $src = $icfunc($file_src);
+    $imgSize = getimagesize($file_src);
+    if (empty($imgSize)) {
+        _error_log("im_resize: getimagesize($file_src) return false " . json_encode($imgSize));
+        return false;
+    }
+    try {
+        $src = $icfunc($file_src);
+    } catch (Exception $exc) {
+        _error_log("im_resize: " . $exc->getMessage());
+        _error_log("im_resize: Try {$icfunc} from string");
+        $src = imagecreatefromstring(file_get_contents($file_src));
+        if (!$src) {
+            _error_log("im_resize: fail {$icfunc} from string");
+            return false;
+        }
+    }
+
+
 
     $ws = imagesx($src);
     $hs = imagesy($src);
@@ -2611,7 +2639,7 @@ function get_browser_name($user_agent = "") {
     // Humans / Regular Users  
     if (strpos($t, 'crkey')) {
         return 'Chromecast';
-    }else if (strpos($t, 'opera') || strpos($t, 'opr/'))
+    } else if (strpos($t, 'opera') || strpos($t, 'opr/'))
         return 'Opera';
     elseif (strpos($t, 'edge'))
         return 'Edge';
@@ -2704,12 +2732,36 @@ function TimeLogEnd($name, $line, $limit = 0.7) {
     TimeLogStart($name);
 }
 
-function _error_log($message, $message_type = 0, $destination = null, $extra_headers = null) {
+class AVideoLog {
+
+    static $DEBUG = 0;
+    static $WARNING = 1;
+    static $ERROR = 2;
+    static $SECURITY = 3;
+
+}
+
+function _error_log($message, $type = 0) {
     global $global;
-    if (!empty($global['noDebug'])) {
+    if (!empty($global['noDebug']) && $type == 0) {
         return false;
     }
-    error_log($message, $message_type, $destination, $extra_headers);
+    $prefix = "AVideoLog::";
+    switch ($type) {
+        case 0:
+            $prefix .= "DEBUG: ";
+            break;
+        case 1:
+            $prefix .= "WARNING: ";
+            break;
+        case 2:
+            $prefix .= "ERROR: ";
+            break;
+        case 3:
+            $prefix .= "SECURITY: ";
+            break;
+    }
+    error_log($prefix . $message);
 }
 
 function postVariables($url, $array) {
@@ -2995,7 +3047,7 @@ function encrypt_decrypt($string, $action) {
 }
 
 function encryptString($string) {
-    if(is_object($string)){
+    if (is_object($string)) {
         $string = json_encode($string);
     }
     return encrypt_decrypt($string, 'encrypt');
@@ -3005,38 +3057,38 @@ function decryptString($string) {
     return encrypt_decrypt($string, 'decrypt');
 }
 
-function getToken($timeout=0, $salt=""){
+function getToken($timeout = 0, $salt = "") {
     global $global;
     $obj = new stdClass();
-    $obj->salt = $global['salt'].$salt;
-    
-    if(!empty($timeout)){
+    $obj->salt = $global['salt'] . $salt;
+
+    if (!empty($timeout)) {
         $obj->time = time();
-        $obj->timeout = $obj->time+$timeout;
-    }else{
+        $obj->timeout = $obj->time + $timeout;
+    } else {
         $obj->time = strtotime("Today 00:00:00");
         $obj->timeout = strtotime("Today 23:59:59");
         $obj->timeout += cacheExpirationTime();
     }
     $strObj = json_encode($obj);
     //_error_log("Token created: {$strObj}");
-    
+
     return encryptString($strObj);
 }
 
-function verifyToken($token, $salt=""){
+function verifyToken($token, $salt = "") {
     global $global;
     $obj = json_decode(decryptString($token));
-    if(empty($obj)){
+    if (empty($obj)) {
         _error_log("verifyToken invalid token");
         return false;
     }
-    if($obj->salt !== $global['salt'].$salt){
+    if ($obj->salt !== $global['salt'] . $salt) {
         _error_log("verifyToken salt fail");
         return false;
     }
     $time = $time();
-    if(!($time>=$obj->time && $obj->timeout<=$time)){
+    if (!($time >= $obj->time && $obj->timeout <= $time)) {
         _error_log("verifyToken token timout");
         return false;
     }
@@ -3071,4 +3123,62 @@ function _dieAndLogObject($obj, $prefix = "") {
     $objString = json_encode($obj);
     _error_log($prefix . $objString);
     die($objString);
+}
+
+function isAVideoPlayer(){
+    global $isEmbed;
+    
+    if (!empty($_GET['videoName']) || !empty($_GET['u'])  || !empty($_GET['evideo']) || !empty($_GET['playlists_id'])) {
+        return true;
+    }
+    return false;
+}
+
+
+function isEmbed(){
+    global $isEmbed;
+    return !empty($isEmbed);
+}
+
+function isLive(){
+    global $isLive;
+    return !empty($isLive);
+}
+
+function isVideoPlayerHasProgressBar(){
+    if(isLive()){
+        $obj = AVideoPlugin::getObjectData('Live');
+        if(empty($obj->disableDVR)){
+            return true;
+        }
+    }else if(isAVideoPlayer()){
+        return true;
+    }
+    return false;
+    
+}
+
+function isHLS(){
+    global $video, $global;
+    if(isLive()){
+        return true;
+    }else if($video['type']=='video' && file_exists("{$global['systemRootPath']}videos/{$video['filename']}/index.m3u8")){
+        return true;
+    }
+    return false;
+    
+}
+
+function getRequestURI(){
+    if(empty($_SERVER['REQUEST_URI'])){
+        return "";
+    }
+    return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+}
+
+function getSelfURI(){
+    if(empty($_SERVER['PHP_SELF'])){
+        return "";
+    }
+    return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[PHP_SELF]?$_SERVER[QUERY_STRING]";
 }

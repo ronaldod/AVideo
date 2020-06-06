@@ -265,6 +265,10 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                                 youTubeMenuIsOpened = false;
                             }
                             $(document).ready(function () {
+                                if(inIframe()){
+                                    $("#mainNavBar").hide();
+                                    $("body").css("padding-top", "0");
+                                }
                                 $('#buttonMenu').on("click.sidebar", function (event) {
                                     event.stopPropagation();
                                     //$('#sidebar').fadeToggle();
@@ -629,13 +633,6 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                                                 </a>
                                             </li>
 
-                                            <li>
-                                                <a href="<?php echo User::getChannelLink(); ?>" >
-                                                    <span class="fas fa-play-circle"></span>
-                                                    <?php echo __($advancedCustomUser->MyChannelLabel); ?>
-                                                </a>
-                                            </li>
-
                                             <?php
                                             if (User::canUpload(true)) {
                                                 ?>
@@ -648,8 +645,16 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                                                 </li>
                                                 <?php
                                             }
+                                            ?>
+                                            <li>
+                                                <a href="<?php echo User::getChannelLink(); ?>" >
+                                                    <span class="fas fa-play-circle"></span>
+                                                    <?php echo __($advancedCustomUser->MyChannelLabel); ?>
+                                                </a>
+                                            </li>    
+                                            <?php
 
-                                            print AVideoPlugin::navBarButtons();
+                                            print AVideoPlugin::navBarProfileButtons();
 
                                             if ((($config->getAuthCanViewChart() == 0) && (User::canUpload())) || (($config->getAuthCanViewChart() == 1) && (User::canViewChart()))) {
                                                 ?>
@@ -809,17 +814,6 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                                 </div>
                             </li>
 
-                            <li>
-
-                                <div>
-                                    <a href="<?php echo User::getChannelLink(); ?>" class="btn btn-danger btn-block" style="border-radius: 0;">
-                                        <span class="fas fa-play-circle"></span>
-                                        <?php echo __($advancedCustomUser->MyChannelLabel); ?>
-                                    </a>
-
-                                </div>
-                            </li>
-
                             <?php
                             if (User::canUpload()) {
                                 ?>
@@ -834,14 +828,25 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                                 </li>
                                 <?php
                             }
+                            ?>
+                            <li>
 
+                                <div>
+                                    <a href="<?php echo User::getChannelLink(); ?>" class="btn btn-danger btn-block" style="border-radius: 0;">
+                                        <span class="fas fa-play-circle"></span>
+                                        <?php echo __($advancedCustomUser->MyChannelLabel); ?>
+                                    </a>
+
+                                </div>
+                            </li>    
+                            <?php
                             print AVideoPlugin::navBarButtons();
 
                             if ((($config->getAuthCanViewChart() == 0) && (User::canUpload())) || (($config->getAuthCanViewChart() == 1) && (User::canViewChart()))) {
                                 ?>
                                 <li>
                                     <div>
-                                        <a href="<?php echo $global['webSiteRootURL']; ?>charts" class="btn btn-info btn-block" style="border-radius: 0;">
+                                        <a href="<?php echo $global['webSiteRootURL']; ?>charts" class="btn btn-default btn-block" style="border-radius: 0;">
                                             <span class="fas fa-tachometer-alt"></span>
                                             <?php echo __("Dashboard"); ?>
                                         </a>
@@ -852,7 +857,7 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                                 ?>
                                 <li>
                                     <div>
-                                        <a href="<?php echo $global['webSiteRootURL']; ?>subscribes" class="btn btn-warning btn-block" style="border-radius: 0">
+                                        <a href="<?php echo $global['webSiteRootURL']; ?>subscribes" class="btn btn-default btn-block" style="border-radius: 0">
                                             <span class="fa fa-check"></span>
                                             <?php echo __("My Subscribers"); ?>
                                         </a>
@@ -864,7 +869,7 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
 
                                     <li>
                                         <div>
-                                            <a href="<?php echo $global['webSiteRootURL']; ?>categories" class="btn btn-info btn-block" style="border-radius: 0;">
+                                            <a href="<?php echo $global['webSiteRootURL']; ?>categories" class="btn btn-default btn-block" style="border-radius: 0;">
                                                 <span class="glyphicon glyphicon-list"></span>
                                                 <?php echo __($advancedCustom->CategoryLabel); ?>
                                             </a>
@@ -985,6 +990,10 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                     }
                     ?>
 
+
+                    <?php
+                    echo AVideoPlugin::getHTMLMenuLeft();
+                    ?>
 
                     <?php
                     if (empty($advancedCustom->doNotShowLeftMenuAudioAndVideoButtons)) {
@@ -1111,10 +1120,6 @@ if (!empty($advancedCustomUser->userMustBeLoggedIn) && !empty($advancedCustomUse
                         $_POST = $post;
                         $_GET = $get;
                     }
-                    ?>
-
-                    <?php
-                    echo AVideoPlugin::getHTMLMenuLeft();
                     ?>
 
                     <!-- categories END -->

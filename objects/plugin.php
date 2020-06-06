@@ -181,7 +181,9 @@ class Plugin extends ObjectYPT {
                     if (is_dir($dir . DIRECTORY_SEPARATOR . $value)) {
                         $p = AVideoPlugin::loadPlugin($value);
                         if (!is_object($p) || $p->hidePlugin()) {
-                            _error_log("Plugin Not Found: {$value}");
+                            if($value!=="Statistics"){ // avoid error while this plugin is not ready
+                                _error_log("Plugin Not Found: {$value}");
+                            }
                             continue;
                         }
                         $obj = new stdClass();
@@ -318,7 +320,7 @@ class Plugin extends ObjectYPT {
         }
         if (!empty($object_data)) {
             foreach ($object_data as $key => $value) {
-                if (!empty($value->type) && !empty($value->value) && strtolower($value->type) === "encrypted") {
+                if (!empty($value->type) && !empty($value->value) && is_string($value->type) && strtolower($value->type) === "encrypted") {
                     if(!self::isEncrypted($value->value)){
                         $obj2 = new stdClass();
                         $obj2->dateEncrypted = time();

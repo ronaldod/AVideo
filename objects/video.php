@@ -755,6 +755,10 @@ if (!class_exists('Video')) {
                     $video['title'] = UTF8encode($video['title']);
                     $video['description'] = UTF8encode($video['description']);
                     $video['progress'] = self::getVideoPogressPercent($video['id']);
+                    $video['isFavorite'] = self::isFavorite($video['id']);
+                    $video['isWatchLater'] = self::isWatchLater($video['id']);
+                    $video['favoriteId'] = self::getFavoriteIdFromUser(User::getId());
+                    $video['watchLaterId'] = self::getWatchLaterIdFromUser(User::getId());
                     if (empty($video['filesize']) && ($video['type'] == "video" || $video['type'] == "audio")) {
                         $video['filesize'] = Video::updateFilesize($video['id']);
                     }
@@ -1086,6 +1090,10 @@ if (!class_exists('Video')) {
                     $row['tags'] = self::getTags($row['id']);
                     $row['title'] = UTF8encode($row['title']);
                     $row['description'] = UTF8encode($row['description']);
+                    $row['isFavorite'] = self::isFavorite($row['id']);
+                    $row['isWatchLater'] = self::isWatchLater($row['id']);
+                    $row['favoriteId'] = self::getFavoriteIdFromUser(User::getId());
+                    $row['watchLaterId'] = self::getWatchLaterIdFromUser(User::getId());
                     if (empty($row['filesize'])) {
                         $row['filesize'] = Video::updateFilesize($row['id']);
                     }
@@ -1103,6 +1111,34 @@ if (!class_exists('Video')) {
                 die($sql . '\nError : (' . $global['mysqli']->errno . ') ' . $global['mysqli']->error);
             }
             return $videos;
+        }
+        
+        static function isFavorite($videos_id) {
+            if(AVideoPlugin::isEnabledByName("PlayLists")){
+                return PlayList::isVideoOnFavorite($videos_id, User::getId());
+            }
+            return false;
+        }
+        
+        static function isWatchLater($videos_id) {
+            if(AVideoPlugin::isEnabledByName("PlayLists")){
+                return PlayList::isVideoOnWatchLater($videos_id, User::getId());
+            }
+            return false;
+        }
+        
+        static function getFavoriteIdFromUser($users_id) {
+            if(AVideoPlugin::isEnabledByName("PlayLists")){
+                return PlayList::getFavoriteIdFromUser($users_id);
+            }
+            return false;
+        }
+        
+        static function getWatchLaterIdFromUser($users_id) {
+            if(AVideoPlugin::isEnabledByName("PlayLists")){
+                return PlayList::getWatchLaterIdFromUser($users_id);
+            }
+            return false;
         }
 
         static function updateFilesize($videos_id) {
@@ -2563,6 +2599,43 @@ if (!class_exists('Video')) {
             return false;
         }
 
+        static function getHigherVideoPathFromID($videos_id){
+            if(empty($videos_id)){                
+                return false;
+            }
+            $paths = self::getVideosPathsFromID($videos_id);
+            $types = array(0, 'HD', 'SD', 'Low');
+            
+            if(!empty($paths['mp4'])){
+                foreach ($types as $value) {
+                    if(!empty($paths['mp4'][$value])){
+                        return $paths['mp4'][$value]["url"];
+                    }
+                }
+            }
+            if(!empty($paths['webm'])){
+                foreach ($types as $value) {
+                    if(!empty($paths['webm'][$value])){
+                        return $paths['webm'][$value]["url"];
+                    }
+                }
+            }
+            if(!empty($paths['m3u8'])){
+                if(!empty($paths['m3u8'])){
+                    return $paths['m3u8']["url"];
+                }
+            }
+            return false;
+        }
+        
+        static function getVideosPathsFromID($videos_id) {
+            if(empty($videos_id)){
+                return false;
+            }
+            $video = new Video("", "", $videos_id);
+            return self::getVideosPaths($video->getFilename(), true);
+        }
+        
         static function getVideosPaths($filename, $includeS3 = false) {
             $types = array('', '_Low', '_SD', '_HD');
             $videos = array();

@@ -34,6 +34,11 @@ class PlayLists extends PluginAbstract {
         $obj->useOldPlayList = false;
         $obj->expandPlayListOnChannels = false;
         $obj->usePlaylistPlayerForSeries = true;
+        $obj->showWatchLaterOnLeftMenu = true;
+        $obj->showFavoriteOnLeftMenu = true;
+        $obj->showWatchLaterOnProfileMenu = true;
+        $obj->showFavoriteOnProfileMenu = true;
+        $obj->showPlayLiveButton = true;
 
         return $obj;
     }
@@ -122,6 +127,22 @@ class PlayLists extends PluginAbstract {
         return PlayList::getWatchLaterIdFromUser($users_id);
     }
 
+    static function getWatchLaterLink() {
+        if (!User::isLogged()) {
+            return "";
+        }
+        global $global;
+        return "{$global['webSiteRootURL']}watch-later";
+    }
+
+    static function getFavoriteLink() {
+        if (!User::isLogged()) {
+            return "";
+        }
+        global $global;
+        return "{$global['webSiteRootURL']}favorite";
+    }
+
     public function thumbsOverlay($videos_id) {
         global $global;
         include $global['systemRootPath'] . 'plugin/PlayLists/buttons.php';
@@ -176,9 +197,9 @@ class PlayLists extends PluginAbstract {
             if ($obj->usePlaylistPlayerForSeries) {
                 $video = Video::getVideoFromCleanTitle($_GET['videoName']);
                 if ($video['type'] == 'serie' && !empty($video['serie_playlists_id'])) {
-                    if(basename($_SERVER["SCRIPT_FILENAME"])== "videoEmbeded.php"){
+                    if (basename($_SERVER["SCRIPT_FILENAME"]) == "videoEmbeded.php") {
                         $link = PlayLists::getLink($video['serie_playlists_id'], true);
-                    }else{
+                    } else {
                         $link = PlayLists::getLink($video['serie_playlists_id']);
                     }
                     header("Location: {$link}");
@@ -188,18 +209,122 @@ class PlayLists extends PluginAbstract {
         }
     }
 
-    static function getLink($playlists_id, $embed=false) {
+    static function getLink($playlists_id, $embed = false) {
         global $global;
         $obj = AVideoPlugin::getObjectData("PlayLists");
-        if($embed){
+        if ($embed) {
             return $global['webSiteRootURL'] . "plugin/PlayLists/embed.php?playlists_id=" . $playlists_id;
-        }else{
+        } else {
             if (empty($obj->useOldPlayList)) {
                 return $global['webSiteRootURL'] . "plugin/PlayLists/player.php?playlists_id=" . $playlists_id;
             } else {
                 return $global['webSiteRootURL'] . "program/" . $playlists_id;
             }
         }
+    }
+    
+    public function navBarButtons() {
+        
+        $obj = AVideoPlugin::getObjectData("PlayLists");
+        $str = "";
+        
+        if($obj->showWatchLaterOnLeftMenu){
+            $str .= '<li>
+                        <div>
+                            <a href="' . self::getWatchLaterLink() . '" class="btn btn-default btn-block" style="border-radius: 0;">
+                                <i class="fas fa-clock"></i>
+                                ' . __("Watch Later") . '
+                            </a>
+                        </div>
+                    </li>';
+        }
+        if($obj->showFavoriteOnLeftMenu){
+            $str .= '<li>
+                        <div>
+                            <a href="' . self::getFavoriteLink() . '" class="btn btn-default btn-block" style="border-radius: 0;">
+                                <i class="fas fa-heart"></i>
+                                ' . __("Favorite") . '
+                            </a>
+                        </div>
+                    </li>';
+        }
+        return $str;
+    }
+    
+    
+    public function navBarProfileButtons() {
+        
+        $obj = AVideoPlugin::getObjectData("PlayLists");
+        $str = "";
+        
+        if($obj->showWatchLaterOnProfileMenu){
+            $str .= '<li>
+                            <a href="' . self::getWatchLaterLink() . '" class="" style="border-radius: 0;">
+                                <i class="fas fa-clock"></i>
+                                ' . __("Watch Later") . '
+                            </a>
+                    </li>';
+        }
+        if($obj->showFavoriteOnProfileMenu){
+            $str .= '<li>
+                            <a href="' . self::getFavoriteLink() . '" class="" style="border-radius: 0;">
+                                <i class="fas fa-heart"></i>
+                                ' . __("Favorite") . '
+                            </a>
+                    </li>';
+        }
+        return $str;
+    }
+    
+    static function getLiveLink($playlists_id){
+        global $global;
+        if(!self::canPlayProgramsLive()){
+            return false;
+        }
+        // does it has videos?
+        $videosArrayId = PlayLists::getOnlyVideosAndAudioIDFromPlaylistLight($playlists_id);
+        if(empty($videosArrayId)){
+            return false;
+        }
+        
+        return "{$global['webSiteRootURL']}plugin/PlayLists/playProgramsLive.json.php?playlists_id=" . $playlists_id;
+    }
+    
+    static function canPlayProgramsLive(){
+        // can the user live?
+        if(!User::canStream()){
+            return false;
+        }
+        // Is API enabled
+        if(!AVideoPlugin::isEnabledByName("API")){
+            return false;
+        }
+        return true;
+    }
+    
+    static function getOnlyVideosAndAudioIDFromPlaylistLight($playlists_id) {
+        global $global;
+        $sql = "SELECT * FROM  playlists_has_videos p "
+                . " LEFT JOIN videos v ON videos_id = v.id "
+                . " WHERE playlists_id = ? AND v.status IN ('" . implode("','", Video::getViewableStatus(true)) . "')"
+                . " AND (`type` = 'video' OR `type` = 'audio' ) ORDER BY p.`order` ";
+
+        $sort = @$_POST['sort'];
+        $_POST['sort'] = array();
+        $_POST['sort']['p.`order`'] = 'ASC';
+        $_POST['sort'] = $sort;
+        $res = sqlDAL::readSql($sql, "i", array($playlists_id));
+        $fullData = sqlDAL::fetchAllAssoc($res);
+        sqlDAL::close($res);
+        $rows = array();
+        if ($res != false) {
+            foreach ($fullData as $row) {
+                $rows[] = $row;
+            }
+        } else {
+            die($sql . '\nError : (' . $global['mysqli']->errno . ') ' . $global['mysqli']->error);
+        }
+        return $rows;
     }
 
 }

@@ -35,19 +35,73 @@ class PlayerSkins extends PluginAbstract {
         $obj->skin = "youtube";
         $obj->playbackRates = "[0.5, 1, 1.5, 2]";
         $obj->playerCustomDataSetup = "";
+        $obj->showSocialShareOnEmbed = true;
+        $obj->showLoopButton = true;
+        $obj->showLogo = false;
+        $obj->showLogoOnEmbed = false;
+        $obj->showLogoAdjustScale = "0.4";
+        $obj->showLogoAdjustLeft = "-74px";
+        $obj->showLogoAdjustTop = "-22px;";
         return $obj;
     }
 
     public function getHeadCode() {
-        global $global;
+        global $global, $config;
         $obj = $this->getDataObject();
         $css = "";
         if (!empty($_GET['videoName']) || !empty($_GET['u'])  || !empty($_GET['evideo']) || !empty($_GET['playlists_id'])) {
             $css .= "<link href=\"{$global['webSiteRootURL']}plugin/PlayerSkins/skins/{$obj->skin}.css\" rel=\"stylesheet\" type=\"text/css\"/>";
+            if ($obj->showLoopButton && !isLive()) {
+                $css .= "<link href=\"{$global['webSiteRootURL']}plugin/PlayerSkins/loopbutton.css\" rel=\"stylesheet\" type=\"text/css\"/>";
+            }
+            if($obj->showLogoOnEmbed && isEmbed() || $obj->showLogo ){
+                $logo = "{$global['webSiteRootURL']}".$config->getLogo(true);
+                $css .= "<style>"
+                        . ".player-logo{
+  outline: none;
+  filter: grayscale(100%);
+  width:100px !important;
+}
+.player-logo:hover{
+  filter: none;
+  -webkit-filter: drop-shadow(1px 1px 1px rgba(255, 255, 255, 0.5));
+  filter: drop-shadow(1px 1px 1px rgba(255, 255, 255, 0.5));
+}
+.player-logo:before {
+    display: inline-block;
+    content: url({$logo});
+    transform: scale({$obj->showLogoAdjustScale});
+  position: relative;
+  left:{$obj->showLogoAdjustLeft};
+  top:{$obj->showLogoAdjustTop};
+    
+}"
+                        . "</style>";
+            }
         }
         return $css;
     }
 
+    
+    public function getFooterCode() {
+        global $global, $config;
+        $js = "";
+        $obj = $this->getDataObject();
+        if (!empty($_GET['videoName']) || !empty($_GET['u'])  || !empty($_GET['evideo']) || !empty($_GET['playlists_id'])) {
+            if ($obj->showLoopButton && !isLive()) {
+                $js .= "<script src=\"{$global['webSiteRootURL']}plugin/PlayerSkins/loopbutton.js\"></script>";
+            }
+            if($obj->showLogoOnEmbed && isEmbed() || $obj->showLogo ){
+                $title = $config->getWebSiteTitle();
+                $url = "{$global['webSiteRootURL']}{$config->getLogo(true)}";
+                $js .= "<script>var PlayerSkinLogoTitle = '{$title}';</script>";
+                $js .= "<script src=\"{$global['webSiteRootURL']}plugin/PlayerSkins/logo.js\"></script>";
+            }
+        }
+        
+        return $js;
+    }
+    
     public function getTags() {
         return array('free');
     }
@@ -58,10 +112,10 @@ class PlayerSkins extends PluginAbstract {
         
         $dataSetup = array();
         
-        if(!empty($obj->playbackRates)){
+        if(!isLive() && !empty($obj->playbackRates)){
             $dataSetup[] = "'playbackRates':{$obj->playbackRates}";
         }
-        if ((isset($_GET['isEmbedded'])) && ($disableYoutubeIntegration == false) && !empty($video['videoLink'])) {
+        if (!isLive() && (isset($_GET['isEmbedded'])) && ($disableYoutubeIntegration == false) && !empty($video['videoLink'])) {
             if ($_GET['isEmbedded'] == "y") {
                 $dataSetup[] = "techOrder:[\"youtube\"]";
                 $dataSetup[] = "sources:[{type: \"video/youtube\", src: \"{$video['videoLink']}\"}]";
@@ -73,11 +127,16 @@ class PlayerSkins extends PluginAbstract {
             }
         }
         
+        $pluginsDataSetup = AVideoPlugin::dataSetup();
+        if(!empty($pluginsDataSetup)){
+            $dataSetup[] = $pluginsDataSetup;
+        }
         if(!empty($dataSetup)){
             return ",{". implode(",", $dataSetup)."{$str}{$obj->playerCustomDataSetup}}";
         }
         
         return "";
     }
+    
     
 }

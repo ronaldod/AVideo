@@ -20,7 +20,7 @@ function createGallery($title, $sort, $rowCount, $getName, $mostWord, $lessWord,
     }
     global $global, $args, $url;
     $paggingId = uniqid();
-    $uid = "gallery".uniqid();
+    $uid = "gallery" . uniqid();
     ?>
     <div class="clear clearfix galeryRowElement" id="<?php echo $uid; ?>">
         <h3 class="galleryTitle">
@@ -56,7 +56,7 @@ function createGallery($title, $sort, $rowCount, $getName, $mostWord, $lessWord,
             $page = $totalPages;
             $_POST['current'] = $totalPages;
         }
-        $videos = Video::getAllVideos("viewable", false, $ignoreGroup);
+        $videos = Video::getAllVideos("viewableNotUnlisted", false, $ignoreGroup);
         // need to add dechex because some times it return an negative value and make it fails on javascript playlists
         $countCols = createGallerySection($videos, dechex(crc32($getName)));
         ?>
@@ -66,14 +66,14 @@ function createGallery($title, $sort, $rowCount, $getName, $mostWord, $lessWord,
         </div>
     </div>
     <?php
-    if(empty($countCols)){
-     ?>
-    <style>
-        #<?php echo $uid; ?>{
-            display: none;
-        }
-    </style>
-     <?php   
+    if (empty($countCols)) {
+        ?>
+        <style>
+            #<?php echo $uid; ?>{
+                display: none;
+            }
+        </style>
+        <?php
     }
     ?>
     <script>
@@ -134,6 +134,7 @@ function createGallerySection($videos, $crc = "", $get = array(), $ignoreAds = f
     $obj = AVideoPlugin::getObjectData("Gallery");
     $zindex = 1000;
     $startG = microtime(true);
+    $program = AVideoPlugin::loadPluginIfEnabled('PlayLists');
     foreach ($videos as $value) {
 
         // that meas auto generate the channelName
@@ -180,6 +181,36 @@ function createGallerySection($videos, $crc = "", $get = array(), $ignoreAds = f
                     echo AVideoPlugin::thumbsOverlay($value['id']);
                     @$timesG[__LINE__] += microtime(true) - $startG;
                     $startG = microtime(true);
+                    if (User::isLogged() && !empty($program)) {
+                        ?>
+                        <div class="galleryVideoButtons">
+                            <?php
+                            //var_dump($value['isWatchLater'], $value['isFavorite']);
+                            if ($value['isWatchLater']) {
+                                $watchLaterBtnAddedStyle = "";
+                                $watchLaterBtnStyle = "display: none;";
+                            } else {
+                                $watchLaterBtnAddedStyle = "display: none;";
+                                $watchLaterBtnStyle = "";
+                            }
+                            if ($value['isFavorite']) {
+                                $favoriteBtnAddedStyle = "";
+                                $favoriteBtnStyle = "display: none;";
+                            } else {
+                                $favoriteBtnAddedStyle = "display: none;";
+                                $favoriteBtnStyle = "";
+                            }
+                            ?>
+                            
+                            <button onclick="addVideoToPlayList(<?php echo $value['id']; ?>, false, <?php echo $value['watchLaterId']; ?>);return false;" class="btn btn-dark btn-xs watchLaterBtnAdded watchLaterBtnAdded<?php echo $value['id']; ?>" data-toggle="tooltip" data-placement="left" title="<?php echo __("Added On Watch Later"); ?>" style="color: #4285f4;<?php echo $watchLaterBtnAddedStyle; ?>" ><i class="fas fa-check"></i></button> 
+                            <button onclick="addVideoToPlayList(<?php echo $value['id']; ?>, true, <?php echo $value['watchLaterId']; ?>);return false;" class="btn btn-dark btn-xs watchLaterBtn watchLaterBtn<?php echo $value['id']; ?>" data-toggle="tooltip" data-placement="left" title="<?php echo __("Watch Later"); ?>" style="<?php echo $watchLaterBtnStyle; ?>" ><i class="fas fa-clock"></i></button>
+                            <br>
+                            <button onclick="addVideoToPlayList(<?php echo $value['id']; ?>, false, <?php echo $value['favoriteId']; ?>);return false;" class="btn btn-dark btn-xs favoriteBtnAdded favoriteBtnAdded<?php echo $value['id']; ?>" data-toggle="tooltip" data-placement="left" title="<?php echo __("Added On Favorite"); ?>" style="color: #4285f4; <?php echo $favoriteBtnAddedStyle; ?>"><i class="fas fa-check"></i></button>  
+                            <button onclick="addVideoToPlayList(<?php echo $value['id']; ?>, true, <?php echo $value['favoriteId']; ?>);return false;" class="btn btn-dark btn-xs favoriteBtn favoriteBtn<?php echo $value['id']; ?>" data-toggle="tooltip" data-placement="left" title="<?php echo __("Favorite"); ?>" style="<?php echo $favoriteBtnStyle; ?>" ><i class="fas fa-heart" ></i></button>    
+                            
+                        </div>
+                        <?php
+                    }
                     ?>
                 </div>
                 <?php
@@ -270,6 +301,14 @@ function createGallerySection($videos, $crc = "", $get = array(), $ignoreAds = f
                         <a href="<?php echo $global['webSiteRootURL']; ?>mvideos?video_id=<?php echo $value['id']; ?>" class="text-primary">
                             <i class="fa fa-edit"></i> <?php echo __("Edit Video"); ?>
                         </a>
+                    </div>
+                <?php }
+                ?>
+                <?php if (!empty($value['trailer1'])) { ?>
+                    <div>
+                        <span onclick="showTrailer('<?php echo parseVideos($value['trailer1'], 1); ?>'); return false;" class="text-primary cursorPointer" >
+                            <i class="fa fa-video"></i> <?php echo __("Trailer"); ?>
+                        </span>
                     </div>
                 <?php }
                 ?>

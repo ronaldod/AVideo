@@ -100,7 +100,7 @@ abstract class PluginAbstract {
                 $o = json_decode(stripslashes($obj['object_data']));
                 $json_last_error = json_last_error();
                 if ($json_last_error !== JSON_ERROR_NONE) {
-                    //_error_log('getDataObject - JSON error (' . $json_last_error . ')' . $this->getName());
+                    //_error_log('getDataObject - JSON error (' . $json_last_error . ') ' . $this->getName()." ".$this->getUUID());
                     $o = json_decode($obj['object_data']);
                     $json_last_error = json_last_error();
                 }
@@ -304,6 +304,10 @@ abstract class PluginAbstract {
     public function navBarButtons() {
         return "";
     }
+    
+    public function navBarProfileButtons() {
+        return "";
+    }
 
     public function navBar() {
         return "";
@@ -460,6 +464,10 @@ abstract class PluginAbstract {
     }
 
     public function getUploadMenuButton() {
+        return "";
+    }
+    
+    public function dataSetup() {
         return "";
     }
 

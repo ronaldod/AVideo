@@ -156,10 +156,10 @@ footer ul.list-inline li {
     }
 }
 @media (max-width: 450px) {
-    #captchaText, .input-group{
+    #captchaText, .captcha .input-group{
         display: block;
     }
-    .input-group-addon:first-child {
+    .captcha .input-group-addon:first-child {
         border-right: 1px solid rgb(204, 204, 204);
     }
 }
@@ -809,4 +809,21 @@ img.blur{
 
 #modeYoutubeBottomContentDetails{
     overflow: hidden;
+}
+
+.cursorPointer:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.btn-dark {
+  color: #CCC;
+  background-color: #111;
+  border-color: #000;
+}
+
+.btn-dark:hover {
+  color: #FFF;
+  background-color: #000;
+  border-color: #000;
 }

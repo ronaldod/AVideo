@@ -121,7 +121,7 @@ if (empty($channelName)) {
                 </div>
                 <div class="panel panel-default">
                     <div class="panel-heading"><i class="fa fa-hdd-o"></i> <?php echo __("Devices Stream Info"); ?></div>
-                    <div class="panel-body">
+                    <div class="panel-body" style="overflow: hidden;">
                         <div class="form-group">
                             <label for="server"><i class="fa fa-server"></i> <?php echo __("Server URL"); ?>:</label>
                             <input type="text" class="form-control" id="server" value="<?php echo $p->getServer(); ?>?p=<?php echo User::getUserPass(); ?>" readonly="readonly">
@@ -131,6 +131,7 @@ if (empty($channelName)) {
                             <label for="streamkey"><i class="fa fa-key"></i> <?php echo __("Stream name/key"); ?>:</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="streamkey" value="<?php echo $trasnmition['key']; ?>" readonly="readonly">
+                                <input type="text" class="form-control" id="serverAndStreamkey" value="<?php echo $p->getServer(); ?>?p=<?php echo User::getUserPass(); ?>/<?php echo $trasnmition['key']; ?>" readonly="readonly">
                                 <span class="input-group-btn">
                                     <a class="btn btn-default" href="<?php echo $global['webSiteRootURL']; ?>plugin/Live/?resetKey=1"><i class="fa fa-refresh"></i> <?php echo __("Reset Key"); ?></a>
                                 </span>

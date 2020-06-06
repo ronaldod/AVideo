@@ -1,4 +1,6 @@
 <?php
+global $isLive;
+$isLive = 1;
 require_once '../../videos/configuration.php';
 /**
  * this was made to mask the main URL
@@ -142,7 +144,7 @@ if(!empty($objSecure)){
 
             $(document).ready(function () {
                 if (typeof player === 'undefined') {
-                    player = videojs('mainVideo');
+                    player = videojs('mainVideo'<?php echo PlayerSkins::getDataSetup(); ?>);
                 }
                 player.ready(function () {
                     var err = this.error();
@@ -170,22 +172,6 @@ if ($config->getAutoplay()) {
         <?php
         require_once $global['systemRootPath'] . 'plugin/AVideoPlugin.php';
         echo AVideoPlugin::getFooterCode();
-        ?>
-        <?php
-        if (empty($liveDO->disableDVR)) {
-            ?>
-            <script src="<?php echo $global['webSiteRootURL']; ?>plugin/Live/videojs-dvr/videojs-dvrseekbar.min.js" type="text/javascript"></script>          
-            <script>
-                $(document).ready(function () {
-                    if (typeof player === 'undefined') {
-                        player = videojs('mainVideo');
-                    }
-
-                    player.dvrseekbar();
-                });
-            </script>      
-            <?php
-        }
-        ?>    
+        ?>  
     </body>
 </html>

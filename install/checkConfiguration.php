@@ -121,16 +121,25 @@ if ($mysqli->query($sql) !== TRUE) {
     exit;
 }
 
+$sql = "INSERT INTO `plugins` VALUES (NULL, 'a06505bf-3570-4b1f-977a-fd0e5cab205d', 'active', now(), now(), '', 'Gallery', 'Gallery', '1.0');";
+if ($mysqli->query($sql) !== TRUE) {
+    $obj->error = "Error enabling Gallery Plugin: " . $mysqli->error;
+    echo json_encode($obj);
+    exit;
+}
+
+
 $mysqli->close();
 
 if(empty($_POST['salt'])){
     $_POST['salt'] = uniqid();
 }
 $content = "<?php
-\$global['configurationVersion'] = 2;
+\$global['configurationVersion'] = 3.1;
 \$global['disableAdvancedConfigurations'] = 0;
 \$global['videoStorageLimitMinutes'] = 0;
 \$global['disableTimeFix'] = 0;
+\$global['logfile'] = '{$_POST['systemRootPath']}videos/avideo.log';
 if(!empty(\$_SERVER['SERVER_NAME']) && \$_SERVER['SERVER_NAME']!=='localhost' && !filter_var(\$_SERVER['SERVER_NAME'], FILTER_VALIDATE_IP)) { 
     // get the subdirectory, if exists
     \$file = str_replace(\"\\\\\", \"/\", __FILE__);

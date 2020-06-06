@@ -124,7 +124,63 @@ class API extends PluginAbstract {
         $obj->rows = $rows;
         return new ApiObject("", false, $obj);
     }
-
+    
+    /**
+     * @param type $parameters 
+     * 'APISecret' to list all videos
+     * 'playlists_id' the program id
+     * 'index' the position of the video
+     * @example {webSiteRootURL}plugin/API/{getOrSet}.json.php?APIName={APIName}&playlists_id=1&index=2&APISecret={APISecret}
+     * @return \ApiObject
+     */
+    public function get_api_video_from_program($parameters){
+        global $global;
+        $playlists = AVideoPlugin::loadPlugin("PlayLists");
+        if(empty($parameters['playlists_id'])){
+            return new ApiObject("Playlist ID is empty", true, $parameters);
+        }
+        $videos = PlayLists::getOnlyVideosAndAudioIDFromPlaylistLight($parameters['playlists_id']);
+        
+        if(empty($videos)){
+            return new ApiObject("There are no videos for this playlist", true, $parameters);
+        }
+        
+        if(empty($parameters['index'])){
+            $parameters['index'] = 0;
+        }
+        
+        if(empty($videos[$parameters['index']])){
+            $video = $videos[0];
+        }else{
+            $video = $videos[$parameters['index']];
+        }
+        
+        $parameters['nextIndex'] = $parameters['index']+1;
+        
+        if(empty($videos[$parameters['nextIndex']])){
+            $parameters['nextIndex'] = 0;
+        }
+        $videoPath = Video::getHigherVideoPathFromID($video['id']);
+        $parameters['videos_id'] = $video['id'];
+        $parameters['path'] = $videoPath;
+        
+        return new ApiObject("", false, $parameters);
+    }
+    
+    /**
+     * @param type $parameters 
+     * 'APISecret' to list all videos
+     * 'videos_id' the video id
+     * @example {webSiteRootURL}plugin/API/{getOrSet}.json.php?APIName={APIName}&videos_id=1&APISecret={APISecret}
+     * @return \ApiObject
+     */
+    public function get_api_video_file($parameters){
+        global $global;
+        $obj = $this->startResponseObject($parameters);
+        $obj->video_file = Video::getHigherVideosPathsFromID($videos_id);
+        return new ApiObject("", false, $obj);
+    }
+    
     /**
      * @param type $parameters 
      * ['APISecret' to list all videos]

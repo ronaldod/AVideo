@@ -1,4 +1,6 @@
 <?php
+global $isLive;
+$isLive = 1;
 $customizedAdvanced = AVideoPlugin::getObjectDataIfEnabled('CustomizeAdvanced');
 
 $objSecure = AVideoPlugin::loadPluginIfEnabled('SecureVideosDirectory');
@@ -57,7 +59,7 @@ if(!empty($objSecure)){
 
             $(document).ready(function () {
                 if (typeof player === 'undefined') {
-                    player = videojs('mainVideo');
+                    player = videojs('mainVideo'<?php echo PlayerSkins::getDataSetup(); ?>);
                 }
                 player.ready(function () {
                     var err = this.error();
